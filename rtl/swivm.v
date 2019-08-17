@@ -12,7 +12,7 @@ module swivm (
 `include "opcodes.v"
 
   // Registers
-  reg [31:0] A, B, C, IR, SP=32'hFFFC, PC=0;
+  reg [31:0] A, B, C, IR, SP=32'hFFFC, PC=`ENTRY;
 
   // The CPU cycles between fetch, decode and two execute phases
   localparam FETCH=   2'b00;
@@ -109,8 +109,7 @@ module swivm (
 			 end
 
 		   LEV:  begin
-			  SP <= SP + immval; addr <= SP;
-			  PC <= rddata; SP <= SP + 8;
+			  SP <= SP + immval; addr <= SP + immval; state <= EXEC2;
 			 end
 
 		   MOD:  A <= A % B;
@@ -163,6 +162,13 @@ module swivm (
 
 		   SUB:  A <= A - B;
 		   SUBI: A <= A - immval;
+
+		   // Traps are not decoded properly. We only deal with
+		   // S_exit and S_putc
+		   TRAP: case (immval)
+			   S_exit: $finish;
+			   S_putc: $display("%c", A);
+			 endcase
 		   XOR:  A <= A ^ B;
 		   XORI: A <= A ^ immval;
 	         endcase
@@ -185,6 +191,7 @@ module swivm (
 			   PC <= A;
 			 end
 
+		   LEV:  begin PC <= rddata; SP <= SP + 8; end
 		   LL, LLS, LLH, LLC, LLB,
 		   LG, LGS, LGH, LGC, LGB,
 		   LX, LXS, LXH, LXC,

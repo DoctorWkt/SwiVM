@@ -1,6 +1,7 @@
 `include "swivm.v"
+`define ENTRY 4
 
-module swivm_tb();
+module swivm_tb ();
 
 reg clk;
 
@@ -9,7 +10,7 @@ initial begin
   $dumpfile("test.vcd");
   $dumpvars(0, swivm_tb);
   clk = 0;       	// initial value of clk
-  #80 $finish;		// Terminate simulation
+  #800 $finish;		// Terminate simulation
 end
 
 // Clock generator
