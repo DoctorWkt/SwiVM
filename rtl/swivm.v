@@ -52,7 +52,8 @@ module swivm (
 		   AND:  A <= A & B;
 		   ANDI: A <= A & immval;
 
-		   ADDL, ANDL, DIVL, MODL, MULL, ORL, SUBL,
+		   ADDL, ANDL, DIVL, MODL, MULL,
+		   ORL, SUBL, LCL, SHLL, SHRL, SRUL,
 		   XORL: begin addr <= SP + immval; state <= EXEC2; end
 
 		   DIV:  A <= A / B;
@@ -69,18 +70,34 @@ module swivm (
 		   LEAG: A <= PC + immval;
 		   LI:   A <= immval;
 		   LHI:  A <= { A[7:0], immval };
+		   LBA:  B <= A;
 		   LBI:  B <= immval;
 		   LBHI: B <= { A[7:0], immval };
+		   LCA:  C <= A;
+
+		   LBG,
 		   LG:   begin addr <= PC + immval; state <= EXEC2; end
 
-		   LGH,
+		   LBGH, LBGS, LGH,
 		   LGS:  begin
 			   addr <= PC + immval; size <= 2'b10; state <= EXEC2;
 			 end
 
-		   LGB,
+		   LGB, LBLC, LBLB,
 		   LGC:  begin
 			   addr <= PC + immval; size <= 2'b00; state <= EXEC2;
+			 end
+
+		   LBX:   begin addr <= B + immval; state <= EXEC2; end
+
+		   LBXH,
+		   LBXS:  begin
+			   addr <= B + immval; size <= 2'b10; state <= EXEC2;
+			 end
+
+		   LBXB,
+		   LBXC:  begin
+			   addr <= B + immval; size <= 2'b00; state <= EXEC2;
 			 end
 
 		   LX:   begin addr <= A + immval; state <= EXEC2; end
@@ -126,6 +143,13 @@ module swivm (
 		   PSHA, PSHB, PSHC,
 		   PSHI: begin SP <= SP - 8; state <= EXEC2; end
 
+		   SHL:  A <= A << B;
+		   SHLI: A <= A << immval;
+		   SHR:  A <= A >>> B;
+		   SHRI: A <= A >>> immval;
+		   SRU:  A <= A >> B;
+		   SRUI: A <= A >> immval;
+
 		   SG:   begin addr <= PC + immval; wrdata <= A; we <= 1'b0; end
 
 		   SGH:  begin
@@ -145,6 +169,12 @@ module swivm (
 			   size <= 2'b00; we <= 1'b0;
 			 end
 
+		   SLH:  begin
+			   addr <= SP + immval; wrdata <= A;
+			   size <= 2'b10; we <= 1'b0;
+			 end
+
+		   SSP:  SP <= A;
 		   SUB:  A <= A - B;
 		   SUBI: A <= A - immval;
 
@@ -192,12 +222,17 @@ module swivm (
 			 end
 
 		   LEV:  begin PC <= rddata; SP <= SP + 8; end
+
+		   LCL:  C <= rddata;
+
 		   LL, LLS, LLH, LLC, LLB,
 		   LG, LGS, LGH, LGC, LGB,
 		   LX, LXS, LXH, LXC,
 		   LXB:  A <= rddata;
 
 		   LBLS, LBLH, LBLC, LBLB,
+		   LBG, LBGH, LBGS, LBGB, LBGC,
+		   LBX, LBXS, LBXH, LBXC, LBXB,
 		   LBL:  B <= rddata;
 
 		   MODL: A <= A % rddata;
@@ -210,6 +245,9 @@ module swivm (
 		   PSHB: begin addr <= SP; wrdata <= B; we <= 1'b0; end
 		   PSHC: begin addr <= SP; wrdata <= C; we <= 1'b0; end
 		   PSHI: begin addr <= SP; wrdata <= immval; we <= 1'b0; end
+		   SHLL: A <= A << rddata;
+		   SHRL: A <= A >>> rddata;
+		   SRUL: A <= A >> rddata;
 		   SUBL: A <= A - rddata;
 		   XORL: A <= A ^ rddata;
 	         endcase
