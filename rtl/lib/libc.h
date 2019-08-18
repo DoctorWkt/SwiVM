@@ -51,9 +51,18 @@ char *strcpy(char *d, char *s) { return memcpy(d, s, strlen(s)+1); }
 char *strcat(char *d, char *s) { memcpy(memchr(d, 0, -1), s, strlen(s)+1); return d; }
 int strncmp(char *d, char *s, int n) { while (n > 0) { if (!*d || *d != *s) return *d - *s; n--; d++; s++; } return 0; }
 char *strchr(char *s, int c) { return memchr(s, c, strlen(s)); }
+void puts(char *str) { while (*str) putc(*str++); }
 // XXX strncpy
 // XXX index
 // XXX rindex
+
+// For the user-mode, simulate write()
+int vwrite(int fd, char *ptr, int n)
+{
+  int oldn=n;
+  while(n) { putc(*ptr); ptr++; n--; }
+  return(oldn);
+}
 
 // XXX wrong for now!
 int sscanf(char *s, char *f, int *a) { if (strcmp(f,"%i")) *(double *)a = 2.1; else *a = 1; return 1; }
@@ -109,10 +118,10 @@ int vsprintf(char *s, char *f, va_list v)
 }
 
 int sprintf(char *s, char *f, ...) { va_list v; va_start(v, f); return vsprintf(s, f, v); }
-int printf(char *f, ...) { char s[BUFSIZ]; va_list v; va_start(v, f); return write(1, s, vsprintf(s, f, v)); }
-int vprintf(char *f, va_list v) { char s[BUFSIZ]; return write(1, s, vsprintf(s, f, v)); }
-int dprintf(int d, char *f, ...) { char s[BUFSIZ]; va_list v; va_start(v, f); return write(d, s, vsprintf(s, f, v)); }
-int vdprintf(int d, char *f, va_list v) { char s[BUFSIZ]; return write(d, s, vsprintf(s, f, v)); }
+int printf(char *f, ...) { char s[BUFSIZ]; va_list v; va_start(v, f); return vwrite(1, s, vsprintf(s, f, v)); }
+int vprintf(char *f, va_list v) { char s[BUFSIZ]; return vwrite(1, s, vsprintf(s, f, v)); }
+int dprintf(int d, char *f, ...) { char s[BUFSIZ]; va_list v; va_start(v, f); return vwrite(d, s, vsprintf(s, f, v)); }
+int vdprintf(int d, char *f, va_list v) { char s[BUFSIZ]; return vwrite(d, s, vsprintf(s, f, v)); }
 
 void *malloc(uint n) { int i = sbrk(n); return (i == -1) ? 0 : i; } // XXX placeholder, see mem.h
 void free(void *p) { } // XXX
