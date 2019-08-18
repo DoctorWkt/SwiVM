@@ -6,9 +6,9 @@
  + Write code to convert C executable output to RAM format (DONE)
  + Implement *putc()* and *exit()* system calls (DONE)
  + Implement the opcodes not including floating-point (DONE)
- + Implement the logical instructions
- + Implement the branch instructions
- + Go back and do the signed/unsigned instructions properly
+ + Implement the logical instructions (DONE)
+ + Implement the branch instructions (DONE)
+ + Go back and do the signed/unsigned instructions properly (DONE, not verified)
  + Generate some test cases for the above and ensure code works
 
 ## Full VM Version
