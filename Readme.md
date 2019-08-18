@@ -5,6 +5,11 @@ This is a project to convert the virtual machine used in
 [Swieros](https://github.com/rswier/swieros) into Verilog. The long term
 goal is to get it to synthesize and to run on an FPGA using open-source tools.
 
+## Status - 18th August 2019
+
+Most of the user-mode instructions are implemented, not the float ones.
+I squashed a *JMPI* bug. Now I need to write some good tests.
+
 ## Status - 17th August 2019
 
 I've added more instructions to the Verilog code. I added a *putc()*
