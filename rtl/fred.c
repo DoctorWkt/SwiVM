@@ -11,6 +11,10 @@ void puts(char *str)
 
 int main()
 {
-  puts("Hello world\n");
+  int x=-2, y=4;
+  if (x<y)
+    puts("x<y\n");
+  else
+    puts("x>=y\n");
   exit(0);
 }
