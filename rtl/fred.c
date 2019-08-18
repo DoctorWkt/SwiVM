@@ -3,13 +3,12 @@
 
 int main()
 {
-  int x=-2, y=4;
-  vwrite(1, "Hello world\n", 12);
-  printf("Hello world2\n");
-  printf("Hello world3 %d %d\n", x, y);
-  if (x<y)
-    puts("x<y\n");
-  else
-    puts("x>=y\n");
+  char *f= "deb";
+  switch (*f) {
+    case 'e': puts("e\n"); break;
+    case 'd': puts("d\n"); break;
+    default:  puts("default\n"); break;
+  }
+  printf("%d\n", 2);
   exit(0);
 }

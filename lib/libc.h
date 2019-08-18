@@ -298,6 +298,7 @@ int vsprintf(char *s, char *f, va_list v) {
 	i = va_arg(v, int);
 	goto c1;
       case 'd':
+puts("Got to 'd'\n");
 	if ((i = va_arg(v, int)) < 0)
 	{
 	  sign = 1;

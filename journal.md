@@ -26,3 +26,10 @@ Now I can *printf()*.
 
 The code is as the point where I need to make/get some C test programs that
 will exercise the user-mode instructions and verify that the Verilog code works.
+
+## Sun 18 Aug 17:23:58 AEST 2019
+
+I've rearranged the code so that only the Verilog code is in `rtl/`,
+and I've imported `eu.c` and `c.c` from Swieros. Right now *printf()*
+isn't doing *%d*. Instead, it prints `d` instead of a number. Trying to
+debug it.
