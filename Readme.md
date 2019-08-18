@@ -7,7 +7,7 @@ goal is to get it to synthesize and to run on an FPGA using open-source tools.
 
 ## Status - 17th August 2019
 
-I've added more instructions to the Verilog code. I added a putc()
+I've added more instructions to the Verilog code. I added a *putc()*
 system call so I can print out characters. There's a program to
 convert output from the C compiler into the hex format that Verilog
 can read.

@@ -1,12 +1,16 @@
 #include <u.h>
 #include <libc.h>
+
+void puts(char *str)
+{
+  while (*str) {
+    putc(*str);
+    str++;
+  }
+}
+
 int main()
 {
-  char x=3;
-  char y=4;
-  char z;
-  z= x + y;
-  x='a';
-  putc(x);
+  puts("Hello world\n");
   exit(0);
 }

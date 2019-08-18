@@ -56,9 +56,18 @@ module swivm (
 		   ORL, SUBL, LCL, SHLL, SHRL, SRUL,
 		   XORL: begin addr <= SP + immval; state <= EXEC2; end
 
+		   BE:   PC <= (A == B) ? PC + immval : PC;
+		   BGEU: PC <= (A >= B) ? PC + immval : PC;
+		   BLTU: PC <= (A < B) ? PC + immval : PC;
+		   BNE:  PC <= (A != B) ? PC + immval : PC;
+		   BNZ:  PC <= (A != 32'b0) ? PC + immval : PC;
+		   BZ:   PC <= (A == 32'b0) ? PC + immval : PC;
+
 		   DIV:  A <= A / B;
 		   DIVI: A <= A / immval;
 		   ENT:  SP <= SP + immval;
+		   EQ:   A <= (A == B);
+		   GEU:  A <= (A >= B);
 		   JMP:  PC <= PC + immval;
 		   JMPI: begin addr <= PC + immval + A; state <= EXEC2; end
 
@@ -100,6 +109,7 @@ module swivm (
 			   addr <= B + immval; size <= 2'b00; state <= EXEC2;
 			 end
 
+		   LTU:  A <= (A < B);
 		   LX:   begin addr <= A + immval; state <= EXEC2; end
 
 		   LXH,
@@ -133,6 +143,7 @@ module swivm (
 		   MODI: A <= A % immval;
 		   MUL:  A <= A * B;
 		   MULI: A <= A * immval;
+		   NE:   A <= (A != B);
 		   NOP:  ;
 		   OR:   A <= A | B;
 		   ORI:  A <= A | immval;
@@ -197,7 +208,7 @@ module swivm (
 		   // S_exit and S_putc
 		   TRAP: case (immval)
 			   S_exit: $finish;
-			   S_putc: $display("%c", A);
+			   S_putc: $write("%c", A);
 			 endcase
 		   XOR:  A <= A ^ B;
 		   XORI: A <= A ^ immval;
