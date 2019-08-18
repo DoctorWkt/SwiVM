@@ -36,8 +36,8 @@ int cpu(uint pc, int argc, char **argv)
     ir = *(int *)pc;
 
     if (verbose) {
-      dprintf(2,"PC %x IR %x SP %x\n", pc-gs, ir, sp);
-      dprintf(2,"   A %x B %x C %x\n", a, b, c);
+      dprintf(2,"PC %08x OP %02x Imm %08x SP %08x", pc-gs, ir&0xff, ir>>8, sp);
+      dprintf(2," A %x B %x C %x\n", a, b, c);
     }
 
     pc += 4;

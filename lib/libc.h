@@ -19,14 +19,15 @@ struct pollfd {
   short events, revents;
 };
 
-// intrinsics
-void *memcpy() {
-  asm(LL, 8);
-  asm(LBL, 16);
-  asm(LCL, 24);
-  asm(MCPY);
-  asm(LL, 8);
+void *memcpy (void *dest, void *src, int len)
+{
+  char *d = dest;
+  char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
 }
+// intrinsics
 void *memset() {
   asm(LL, 8);
   asm(LBLB, 16);
@@ -298,7 +299,6 @@ int vsprintf(char *s, char *f, va_list v) {
 	i = va_arg(v, int);
 	goto c1;
       case 'd':
-puts("Got to 'd'\n");
 	if ((i = va_arg(v, int)) < 0)
 	{
 	  sign = 1;

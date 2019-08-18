@@ -75,7 +75,7 @@ module swivm (
 		   GE:   A <= (signedA >= signedB);
 		   GEU:  A <= (A >= B);
 		   JMP:  PC <= PC + immval;
-		   JMPI: begin addr <= PC + immval + A; state <= EXEC2; end
+		   JMPI: begin addr <= PC + immval + (A<<2); state <= EXEC2; end
 
 		   JSRA,
 		   JSR:  begin SP <= SP - 8; state <= EXEC2; end

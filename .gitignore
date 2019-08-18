@@ -1,1 +1,11 @@
 RCS
+bin/start_swivm
+bin/xc
+bin/xeu
+rtl/a.out
+rtl/fred
+rtl/fred.s
+rtl/ram.img
+rtl/test.vcd
+rtl/z
+

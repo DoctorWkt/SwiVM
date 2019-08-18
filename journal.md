@@ -33,3 +33,9 @@ I've rearranged the code so that only the Verilog code is in `rtl/`,
 and I've imported `eu.c` and `c.c` from Swieros. Right now *printf()*
 isn't doing *%d*. Instead, it prints `d` instead of a number. Trying to
 debug it.
+
+Looks like a bug in JMPI, as I've narrowed it down to the *switch()* code.
+Yes, I was treating a value as an char pointer not an int pointer. So I
+had to make A 4x bigger to offset into the int array. *printf()* seems to
+work now. I had to replace *memcpy()* with a real function in `libc.h` as
+*printf()* calls *memcpy()*.
