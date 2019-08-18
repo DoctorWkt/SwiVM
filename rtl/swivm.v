@@ -168,9 +168,13 @@ module swivm (
 		   TRAP: case (immval)
 			   S_exit: $finish;
 			   S_putc: $write("%c", A);
+			   default: $display("Unknown syscall 0x%x at PC 0x%x\n",
+                                                immval, PC-4);
 			 endcase
 		   XOR:  A <= A ^ B;
 		   XORI: A <= A ^ immval;
+		   default: $display("Unknown opcode 0x%x at PC 0x%x\n",
+						opcode, PC-4);
 	         endcase
 	       end
 

@@ -8,15 +8,18 @@
 run: a.out
 	vvp a.out
 
-a.out: swivm_tb.v swivm.v memory.v start_swivm fred
-	./start_swivm fred
-
-start_swivm: start_swivm.c
-	cc -o start_swivm start_swivm.c
+a.out: swivm_tb.v swivm.v memory.v ../bin/start_swivm fred
+	../bin/start_swivm fred
 
 fred: fred.c
-	../bin/xc -o fred -Ilib fred.c
-	../bin/xc -s -Ilib fred.c > fred.s
+	../bin/xc -o fred -I../lib fred.c
+	../bin/xc -s -I../lib fred.c > fred.s
+
+../bin/start_swivm:
+	(cd ../bin; make all)
+
+../bin/xc:
+	(cd ../bin; make all)
 
 clean:
-	rm -f a.out test.vcd start_swivm fred fred.s ram.img
+	rm -f a.out test.vcd fred fred.s ram.img
