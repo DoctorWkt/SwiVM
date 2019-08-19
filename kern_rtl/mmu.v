@@ -63,9 +63,10 @@ module mmu (
 
   always @(posedge i_clk) begin
     case (state)
-      RECVCMD: if (i_valid) begin			// When the command is valid
+      RECVCMD: begin
 		 o_valid <= 1'b0;			// Our output is no longer valid
-		 case (i_cmd)
+		 if (i_valid)				// When the command is valid
+		   case (i_cmd)
 		   MMU_SPAG: begin			// Enable or disable paging
 			       ispaging <= i_data[0]; 
 			       o_error <= MMU_NOERR;
@@ -100,7 +101,7 @@ module mmu (
 			      o_error <= MMU_BADCMD;
 			      state <= SENDDATA;
 			    end
-		 endcase
+		   endcase
 	       end
 
       GETPTE: begin					// We have asked the memory device for the page

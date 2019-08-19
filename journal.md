@@ -53,3 +53,9 @@ implementation based on the notes, but I havent' tested it yet.
 I've taken the user mode CPU and wired it up to the MMU, and added some wait
 states to deal with the delay through the MMU. I've been able to run two
 instructions: ENT and LI, but now it's dying on SL which is a memory write operation.
+
+OK, fixed that. I can now add two numbers together! Now I'm trying a putc('A') and
+it looks like PSHI isn't right. Fixed, I wasn't moving the CPU to the correct state.
+
+Next bug: putc("H"); putc("A"); putc("B"); prints HJL, so somehow the 'H' is being
+incremented by two and we're not getting the A or B.

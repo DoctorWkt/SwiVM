@@ -27,7 +27,7 @@ module swivm (
   localparam DECODE=      3'h1;
   localparam EXEC1=       3'h2;
   localparam EXEC1WAIT=   3'h3;
-  localparam EXECWRWAIT= 3'h4;
+  localparam EXECWRWAIT=  3'h4;
   localparam EXEC2=       3'h5;
   localparam EXEC2WAIT=   3'h6;
   reg [2:0] state;
@@ -259,6 +259,7 @@ module swivm (
 		  end
 
       EXEC2:   begin
+		 state <= FETCH;		// But overruled below
 	         case (opcode)
 		   // These instructions don't need a further memory access
 		   ADDL: A <= A + rddata;
@@ -306,7 +307,6 @@ module swivm (
 		   PSHI: begin addr <= SP; wrdata <= immval; mmu_cmd <= MMU_WRITE;
 			 mmu_validcmd <= 1'b1; state <= EXECWRWAIT; end
 	         endcase
-		 state <= FETCH;
 	       end
     endcase
   end
