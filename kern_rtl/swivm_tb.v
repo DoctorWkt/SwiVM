@@ -10,7 +10,7 @@ initial begin
   $dumpfile("test.vcd");
   $dumpvars(0, swivm_tb);
   clk = 0;       	// initial value of clk
-  #800 $finish;	// Terminate simulation
+  #800000 $finish;	// Terminate simulation
 end
 
 // Clock generator

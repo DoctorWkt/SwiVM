@@ -7,7 +7,7 @@
 `default_nettype none
 
 module mmu (
-  input		i_clk,			// Memory updated on rising edge
+  input		i_clk,
 
 // Interface to the CPU
   input	     [31:0] i_vaddr,		// Virtual memory address

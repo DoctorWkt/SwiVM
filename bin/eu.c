@@ -11,11 +11,11 @@
 #include <libm.h>
 #include <net.h>
 
-enum { STACKSZ = 8*1024*1024 }; // user stack size (8M)
+enum { MEMSIZE = 64*1024 };	// 64K memory size for now
 
 int verbose;
 char *cmd;
-int gs;
+char *gs;
 
 int cpu(uint pc, int argc, char **argv)
 {
@@ -23,7 +23,7 @@ int cpu(uint pc, int argc, char **argv)
   int ir;
   double f, g;
 
-  sp = ((uint)sbrk(STACKSZ) + STACKSZ - 28) & -8;
+  sp = ((uint)gs + MEMSIZE - 28) & -8;
   
   ((uint *)sp)[0] = sp + 24;
   ((uint *)sp)[2] = argc;
@@ -36,8 +36,8 @@ int cpu(uint pc, int argc, char **argv)
     ir = *(int *)pc;
 
     if (verbose) {
-      dprintf(2,"PC %08x OP %02x Imm %08x SP %08x", pc-gs, ir&0xff, ir>>8, sp);
-      dprintf(2," A %x B %x C %x\n", a, b, c);
+      dprintf(2,"PC %08x OP %02x Imm %08x SP %08x", pc-(uint)gs, ir&0xff, ir>>8, sp-(uint)gs);
+      dprintf(2," A %x (%x) B %x C %x\n", a, a-(uint)gs, b, c);
     }
 
     pc += 4;
@@ -365,9 +365,13 @@ int main(int argc, char *argv[])
 
   read(f, &hdr, sizeof(hdr));
   if (hdr.magic != 0xC0DEF00D) { dprintf(2,"%s : bad hdr.magic\n", cmd); return -1; }
+
+  if (MEMSIZE < (st.st_size - sizeof(hdr))) {
+    dprintf(2,"%s : executable too big\n", cmd); return -1;
+  }
   
-  gs = (int)sbrk(st.st_size - sizeof(hdr) + hdr.bss);
-  read(f, (void *)gs, st.st_size - sizeof(hdr));
+  gs = (char *)malloc(MEMSIZE);
+  read(f, (char *)gs, st.st_size - sizeof(hdr));
   close(f);
 
   if (verbose) dprintf(2,"%s : emulating %s\n", cmd, file);
