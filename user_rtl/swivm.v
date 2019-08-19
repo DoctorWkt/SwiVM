@@ -26,7 +26,7 @@ module swivm (
   reg [1:0] state= FETCH;
 
   // Memory interface
-  reg [15:0] 	     addr;		// Address into memory
+  reg [31:0] 	     addr;		// Address into memory
   reg [31:0] 	     wrdata;		// Data to be written
   reg [1:0]  	     size;		// Data size: 00 01 11= byte, half, word
   reg        	     we;		// Write enable, active low
@@ -42,7 +42,7 @@ module swivm (
 
   always @(posedge i_clk) begin
     case (state)
-      FETCH:   begin addr <= PC[15:0]; we <= 1'b1; size <= 2'b11; state <= DECODE; end
+      FETCH:   begin addr <= PC; we <= 1'b1; size <= 2'b11; state <= DECODE; end
 
       DECODE:  begin IR <= rddata; PC <= PC + 4; state <= EXEC1; end
 

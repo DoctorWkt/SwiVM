@@ -5,13 +5,17 @@
 // For word and halfword access, the lowest significant bit(s) of the
 // address are set to zero to force the alignment of the address.
 //
+// The topmost input bits are ignored so that memory is always available.
+// This means that the 64K memory is replicated throughout the 4G
+// address space.
+//
 // (c) 2019 Warren Toomey, GPL3
 
 `default_nettype none
 
 module memory (
   input		i_clk,		// Memory updated on rising edge
-  input	 [15:0] i_addr,		// Memory address
+  input	 [31:0] i_addr,		// Memory address
   input	 [31:0] i_data,		// Input data
   input	 [1:0]	i_size,		// Size of data to access
   input		i_we,		// Write-enable, active low
@@ -19,8 +23,8 @@ module memory (
   );
 
   // Memory is organised as four banks of byte memory.
-  // We use the lowest significant bits of the i_addr to
-  // determine which bank(s) to access
+  // We use the lowest significant bits of the i_addr
+  // to determine which bank(s) to access
 
   reg [7:0] mem[0:(1<<14)-1][0:3];
 
