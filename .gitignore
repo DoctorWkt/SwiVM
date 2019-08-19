@@ -8,4 +8,4 @@ rtl/fred.s
 rtl/ram.img
 rtl/test.vcd
 rtl/z
-
+*.gtkw

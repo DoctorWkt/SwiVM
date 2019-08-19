@@ -39,3 +39,17 @@ Yes, I was treating a value as an char pointer not an int pointer. So I
 had to make A 4x bigger to offset into the int array. *printf()* seems to
 work now. I had to replace *memcpy()* with a real function in `libc.h` as
 *printf()* calls *memcpy()*.
+
+## Mon 19 Aug 13:32:21 AEST 2019
+
+I started to think about the MMU last night. I looked at the `em.c` code
+and got confused :-) However, it looks like an *i386* MMU structure but
+with different flags in each PTE. I've written up some notes on how to
+implement an MMU based on what I can see in `em.c`. Now I've done a basic
+implementation based on the notes, but I havent' tested it yet.
+
+## Mon 19 Aug 17:37:54 AEST 2019
+
+I've taken the user mode CPU and wired it up to the MMU, and added some wait
+states to deal with the delay through the MMU. I've been able to run two
+instructions: ENT and LI, but now it's dying on SL which is a memory write operation.

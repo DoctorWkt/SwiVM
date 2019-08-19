@@ -14,7 +14,7 @@ module mmu (
   input	     [31:0] i_data,		// Input data
   input	      [1:0] i_size,		// Size of data to access
   input	      [3:0] i_cmd,		// Command to perform
-  output	    i_valid,		// Command is valid
+  input	            i_valid,		// Command is valid
   input		    i_user,		// CPU is in user mode
   output reg [31:0] o_data,		// Output data
   output reg	    o_valid,		// Command has completed
@@ -150,8 +150,9 @@ module mmu (
 		  end
 
       SENDDATA: begin
-		  o_data <= mem_rddata;			// Get any data result from memory
+		  o_data  <= mem_rddata;		// Get any data result from memory
 		  o_valid <= 1'b1;			// Send the result or error back
+		  state	  <= RECVCMD;
 		end
 
       NOPAGING: case (i_cmd)				// Non-paging memory access. Send
