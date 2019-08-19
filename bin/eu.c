@@ -287,6 +287,7 @@ int cpu(uint pc, int argc, char **argv)
     case SSP:  sp = a; continue;
     case NOP:  continue;
     case CYC:  a = cycle; continue;
+    case PUTC: putchar(a); continue;
 
     case TRAP:
       switch (ir>>8) {
@@ -320,7 +321,6 @@ int cpu(uint pc, int argc, char **argv)
       case S_poll:    a = poll((void *)a, b, c);           continue; // poll(pfd, n, msec)
       case S_accept:  a = accept(a, (void *)b, (void *)c); continue; // accept(fd, addr, addrlen)
       case S_connect: a = connect(a, (void *)b, c);        continue; // connect(fd, addr, addrlen)
-      case S_putc:    putchar(a);             		   continue;
 
 //      case S_shutdown:
 //      case S_getsockopt:

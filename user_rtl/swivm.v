@@ -142,6 +142,7 @@ module swivm (
 		   POPC: begin addr <= SP; state <= EXEC2; end
 		   PSHA, PSHB, PSHC,
 		   PSHI: begin SP <= SP - 8; state <= EXEC2; end
+		   PUTC: $write("%c", A);
 		   SHL:  A <= A << B;
 		   SHLI: A <= A << immval;
 		   SHR:  A <= A >>> B;
@@ -163,11 +164,9 @@ module swivm (
 		   SUB:  A <= A - B;
 		   SUBI: A <= A - immval;
 
-		   // Traps are not decoded properly. We only deal with
-		   // S_exit and S_putc
+		   // Traps are not decoded properly. We only deal with S_exit
 		   TRAP: case (immval)
 			   S_exit: $finish;
-			   S_putc: $write("%c", A);
 			   default: $display("Unknown syscall 0x%x at PC 0x%x\n",
                                                 immval, PC-4);
 			 endcase

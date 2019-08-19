@@ -1,6 +1,9 @@
 #include <u.h>
 #include <libc.h>
 
+pdir(val)       { asm(LL,8); asm(PDIR); }
+spage(val)      { asm(LL,8); asm(SPAG); }
+
 int main()
 {
   int x=-2, y=4;

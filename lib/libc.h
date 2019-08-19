@@ -164,7 +164,7 @@ poll() {
 }
 putc() {
   asm(LL, 8);
-  asm(TRAP, S_putc);
+  asm(PUTC);
 }
 
 // string routines

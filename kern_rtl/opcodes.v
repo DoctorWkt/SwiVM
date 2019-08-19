@@ -207,6 +207,6 @@ localparam TANH = 8'hcd;
 localparam SQRT = 8'hce;
 localparam FMOD = 8'hcf;
 localparam IDLE = 8'hd0;
+localparam PUTC = 8'hd1;
 
 localparam S_exit = 8'h02;
-localparam S_putc = 8'h1f;
