@@ -9,7 +9,7 @@
 module mmu (
   input		i_clk,
 
-// Interface to the CPU
+  // Interface to the CPU
   input	     [31:0] i_vaddr,		// Virtual memory address
   input	     [31:0] i_data,		// Input data
   input	      [1:0] i_size,		// Size of data to access
@@ -21,10 +21,10 @@ module mmu (
   output reg  [3:0] o_error		// Error result of the command
   );
 
-// Get the MMU constants
+  // Get the MMU constants
 `include "mmu_consts.v"
 
-// States used by the FSM
+  // States used by the FSM
   localparam RECVCMD=	4'h0;		// Receive the command
   localparam GETPTE=	4'h1;		// Get an entry from the page table
   localparam READPAGE=	4'h2;		// Read data from a page
@@ -33,11 +33,11 @@ module mmu (
   localparam NOPAGING=	4'h5;		// Non-paging read or write data
   reg [3:0] state;
 
-// Other internal state
+  // Other internal state
   reg	     ispaging;			// True if we are in paging mode
   reg [31:0] pagedir;			// Base address of the page directory
 
-// Memory interface
+  // Memory interface
   reg  [31:0]	     mem_addr;		// Address into memory
   reg  [31:0]	     mem_wrdata;	// Data to be written
   reg	[1:0]	     mem_size;		// Data size: 00 01 11= byte, half, word
@@ -46,14 +46,14 @@ module mmu (
 
   memory MEM(i_clk, mem_addr, mem_wrdata, mem_size, mem_we, mem_rddata);
 
-// Flags from a page table entry, which comes in from mem_rddata
+  // Flags from a page table entry, which comes in from mem_rddata
   wire pte_p= mem_rddata[0];		// Page is present
   wire pte_w= mem_rddata[1];		// Page is writeable
   wire pte_u= mem_rddata[2];		// Page available in user & kernel mode
   wire pte_a= mem_rddata[3];		// Page has been accessed
   wire pte_d= mem_rddata[4];		// Page is dirty
 
-// Initialise the MMU
+  // Initialise the MMU
   initial begin
     state=    RECVCMD;			// Receiving commands, output not valid
     o_valid=  1'b0;

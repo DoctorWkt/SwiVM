@@ -2,6 +2,7 @@ RCS
 bin/start_swivm
 bin/xc
 bin/xeu
+bin/xem
 rtl/a.out
 rtl/fred
 rtl/fred.s

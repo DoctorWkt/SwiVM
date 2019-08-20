@@ -58,7 +58,7 @@ module swivm (
   // Set the CPU's internal state at start-up
   initial begin
     state        <= FETCH;
-    usermode     <= 1'b1;
+    usermode     <= 1'b0;
     mmu_validcmd <= 1'b0;
   end
 
@@ -209,6 +209,12 @@ module swivm (
 
 		   LEV:  begin SP <= SP + immval; addr <= SP + immval; mmu_cmd <= MMU_READ;
 			 mmu_validcmd <= 1'b1; state <= EXEC1WAIT; end
+
+		   PDIR: begin addr <= A; mmu_cmd <= MMU_PDIR;
+			 mmu_validcmd <= 1'b1; state <= EXECWRWAIT; end
+
+		   SPAG: begin wrdata <= A; mmu_cmd <= MMU_SPAG;
+			 mmu_validcmd <= 1'b1; state <= EXECWRWAIT; end
 
 		   POPA, POPB,
 		   POPC: begin addr <= SP; mmu_cmd <= MMU_READ;

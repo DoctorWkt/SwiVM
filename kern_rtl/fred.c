@@ -59,6 +59,9 @@ int main()
 
   // Print out the value at location 0x0000 and 0x4000,
   // should be the same
+  putc('h');
+  putc('i');
+  putc('\n');
   aptr= (char *)0x0000; bptr= (char *)0x4000;
   printf("%x %x\n", *aptr, *bptr);
   asm(HALT);
