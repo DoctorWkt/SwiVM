@@ -222,6 +222,9 @@ fixsp:
 	}
       }
     }
+
+    if (verbose) dprintf(2, "pc = %08x ir = %08x sp = %08x a = %d b = %d c = %d trap = %u\n",
+	  (uint) xpc - tpc, *xpc, xsp - tsp, a, b, c, trap);
     switch ((uchar) (ir = *xpc++)) {
       case HALT:
 	if (user || verbose)
@@ -1579,6 +1582,7 @@ fixsp:
 	tsp = fsp = 0;
 	goto fixsp;
 
+      case PUTC: putchar(a); continue;
       case NOP:
 	continue;
       case CYC:
@@ -1964,7 +1968,7 @@ int main(int argc, char *argv[]) {
   }
   close(f);
 
-//  if (verbose) dprintf(2,"entry = %u text = %u data = %u bss = %u\n", hdr.entry, hdr.text, hdr.data, hdr.bss);
+  if (verbose) dprintf(2,"entry = %u bss = %u flags = %u\n", hdr.entry, hdr.bss, hdr.flags);
 
   // setup virtual memory
   trk = (uint *) new(TB_SZ * sizeof(uint));	// kernel read table

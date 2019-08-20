@@ -67,3 +67,10 @@ next thing to chase down.
 
 My bad again. I ended the simulation after 800 clock cycles, now
 80,000 and it runs the puts() fine.
+
+I spent some time constructing a program that runs in kernel mode,
+sets a few page entries, then a page directory, turns on paging
+and prints out the value of some virtual locations. I didn't realise
+that the page dir entries also need to be PTE_W as well as the page
+table entries. Anyway, it now runs in `xem`. Now I need to get it
+to do the same thing in `kern_rtl/swivm`.
