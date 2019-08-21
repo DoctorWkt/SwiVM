@@ -22,11 +22,13 @@ module memory (
   output [31:0] o_data		// Output data
   );
 
+`include "mem_consts.v"
+
   // Memory is organised as four banks of byte memory.
   // We use the lowest significant bits of the i_addr
   // to determine which bank(s) to access
 
-  reg [7:0] mem[0:(1<<14)-1][0:3];
+  reg [7:0] mem[0:MEM_SIZE - 1][0:3];
 
   parameter Filename= "ram.img";
   initial begin
@@ -35,7 +37,7 @@ module memory (
 
   // Work out the word aligned address,
   // and the banks used on halfword accesses
-  wire [13:0] aladdr= i_addr[15:2];
+  wire [13:0] aladdr= i_addr[31:2];
   wire [1:0]  bank=   { i_addr[1], 1'b0 };
   wire [1:0]  hibank= { i_addr[1], 1'b1 };
 

@@ -7,10 +7,12 @@
 `include "memory.v"
 
 module swivm (
-  input         i_clk
+  input         i_clk,			// Regular clock cycle
+  input         i_tick			// When high, a clock tick
   );
 
 `include "opcodes.v"
+`include "mem_consts.v"
 `include "mmu_consts.v"
 
   // Registers
@@ -47,6 +49,8 @@ module swivm (
   localparam EXCEPT2=     4'h8;
   localparam RTI1=        4'h9;
   localparam RTI2=        4'ha;
+  localparam IDLESTATE=   4'hb;
+  localparam HALTSTATE=   4'hc;
   reg [3:0] state;
 
   // Internal CPU state
@@ -112,6 +116,12 @@ module swivm (
   end
 
   always @(posedge i_clk) begin
+
+    if (i_tick) begin
+      haveinterrupt <= 1;		// Raise an FTIMER interrupt
+      trapval <= FTIMER;		// on an external clock tick
+    end
+
     case (state)
       FETCH:   
 					// Before we fetch the instruction, see
@@ -151,6 +161,8 @@ module swivm (
 		 state <= FETCH;		// But overruled below
 	         case (opcode)
 		   // These instructions don't require a memory access now.
+		   HALT: state <= HALTSTATE;
+		   IDLE: state <= IDLESTATE;
 		   ADD:  A <= A + B;
 		   ADDI: A <= A + immval;
 		   AND:  A <= A & B;
@@ -204,7 +216,6 @@ module swivm (
 		   JSRA,
 		   JSR:  begin SP <= SP - 8; state <= EXEC2; end
 
-		   HALT: $finish;
 		   LEA:  A <= SP + immval;
 		   LEAG: A <= PC + immval;
 		   LI:   A <= immval;
@@ -219,6 +230,7 @@ module swivm (
 		   MODI: A <= signedA % signedimm;
 		   MDU:  A <= A % B;
 		   MDUI: A <= A % immval;
+		   MSIZ: A <= MEM_SIZE;
 		   MUL:  A <= A * B;
 		   MULI: A <= A * immval;
 		   NE:   A <= (A != B);
@@ -412,6 +424,8 @@ module swivm (
 
       EXCEPT1: begin
 		 mmu_validcmd <= 0;          	// Stop sending the MMU command
+		 haveexception <= 1'b0;		// We've dealt with the exception
+		 haveinterrupt <= 1'b0;		// or interrupt
                  if (rddata_valid) begin
 		  				// Push the trap value to KSP-16
                    addr <= realKSP - 16; wrdata <= utrapval; mmu_cmd <= MMU_WRITE;
@@ -426,8 +440,6 @@ module swivm (
 						// and leave user mode.
 		   if (usermode == 1'b1) USP <= SP;
 		   usermode <= 1'b0;
-		   haveexception <= 1'b0;	// We've dealt with the exception
-		   haveinterrupt <= 1'b0;	// or interrupt
 		   SP <= realKSP-16;		// Switch to the kernel stack
 		   PC <= ivector;		// Start the interrupt handler
 		   state <= FETCH;
@@ -456,6 +468,17 @@ module swivm (
 		   state <= FETCH;
 		   end
       	       end
+
+      HALTSTATE: begin				// Never leave HALTSTATE
+		   $finish;			// In simulation, stop
+      	         end
+
+      IDLESTATE: begin				// Stay here until there is
+						// an interrupt or exception
+		   if ((haveexception == 1'b1) ||
+			((intsenabled == 1'b1) && (haveinterrupt == 1'b1)))
+		     state <= FETCH;
+      	         end
     endcase
   end
 endmodule

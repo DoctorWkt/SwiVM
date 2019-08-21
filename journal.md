@@ -98,3 +98,55 @@ next instruction, and RTI simply resets the PC to this value.
 It took a while but I got the handling of the stack pointer
 right. Now I can take a trap, do some work and return from
 interrupt. Haven't tried an exception or interrupt yet.
+
+## Wed 21 Aug 13:48:29 AEST 2019
+
+I think I might step back for a while and grok how the simulated
+CPU in em.c receives and deals with clock ticks; also, is there
+a simulated disk, how does it work, how does it do interrupts?
+Ditto the keyboard/screen device.
+
+Notes:
+ + There's a 4M RAM file system. It seems to be loaded into memory
+   at the top.
+ + These fault values look interesting: FTIMER = timer interrupt,
+   FKEYBD = keyboard interrupt.
+ + It looks like the timer fires periodically, raising an interrupt
+   and setting the fault to FTIMER.
+ + Similarly, the keyboard is polled regularly. When there's a keypress,
+   an interrupt is raised and the fault is set to FKEYBD.
+ + The BIN kernel-instruction reads from the 1-byte keyboard buffer.
+ + The BOUT kernel-instruction writes one byte out. This is sent with the
+   Unix write(2) syscall, so that there is no output buffer.
+ + As the filesystem is in memory, there's no I/O interrupts for this.
+
+There are some instructions which I should deal with:
+ + HALT: I think I can implement this by moving to a HALT state and staying
+   there forever.
+ + IDLE: This is different from NOP in that the CPU stays in IDLE until
+   there is an interrupt. I can use an IDLE state for this.
+ + I can't do the MCPY and friends instructions. Not the FP instructions
+   or the NET instructions.
+ + BIN and BOUT I have already mentioned.
+ + CYC: not sure what it does.
+ + MSIZ: get the size of memory into A.
+ + TIME: sets a timeout.
+ + LVAD: load a virtual address. This seems to be the address that
+   caused the most recent MMU fault: FMEM, FRPAGE, FWPAGE. Should be
+   easy enough to implement. But I do need to propagate the MMU errors
+   as faults.
+
+So, my ideas. Into the CPU, have a clock tick line, a keyboard data
+available line (and a 1-byte buffer). Ditto an output ready line
+(and a 1-byte buffer). All three status lines raise an interrupt
+when they go high. The faults would be FTIMER, FKEYBD and a new one,
+FTERMOUT for terminal output.
+
+Question: which of the above instructions does the OS use?
+ + BIN, BOUT, IVEC, TIME, LVAD, MSIZ, PDIR, SPAG, HALT, CYC.
+
+I guess I can read up some CYC to see what it does. No, it's commented out
+so I can ignore CYC! I've implemented IDLE, HALT and MSIZ. I've added a
+clock tick line from outside the CPU which raises an interrupt when it
+goes high. I haven't tried these yet, but the code still runs the fred.c
+which causes a trap and then HALTs.
