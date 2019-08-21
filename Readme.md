@@ -5,34 +5,27 @@ This is a project to convert the virtual machine used in
 [Swieros](https://github.com/rswier/swieros) into Verilog. The long term
 goal is to get it to synthesize and to run on an FPGA using open-source tools.
 
-## Status - 21st August 2019
+Read my [journal](journal.md) for details of my progress.
 
-I've got the MMU code working. It's not optimal yet. I've started on
-implementing the interrupt and exception handling. I can do a TRAP,
-handle it and return from interrupt.
+Right now, I haven't fully completed the kernel-mode VM.
 
-## Status - 19th August 2019
+Look into *kern_rtl/* for the Verilog code. If you have Icarus Verilog
+installed, you can run *make* here to compile the code and run a simple
+program (*fred.c*). I modify this program to test new kernel-mode features
+such as pagin, interrupts, exceptions etc.
 
-I designed the MMU and made a first cut implementation of it.
-So far I've tested it in non-paging mode and fixed a few bugs.
+As at 22nd August 2019, the roadmap is to:
 
-## Status - 18th August 2019
-
-Most of the user-mode instructions are implemented, not the float ones.
-I squashed a *JMPI* bug. Now I need to write some good tests.
-
-## Status - 17th August 2019
-
-I've added more instructions to the Verilog code. I added a *putc()*
-system call so I can print out characters. There's a program to
-convert output from the C compiler into the hex format that Verilog
-can read.
-
-## Status - 16th August 2019
-
-Right now, I haven't fully completed the user-mode VM.
-
-Look into *rtl* for the Verilog code. If you have Icarus Verilog
-installed, you can run *make* to compile the code and run a simple
-program from the *ram.img* file. This is the same as the assembled code
-in *ram.txt*.
+ + Pass on the MMU errors as exceptions.
+ + Set up a bad_vaddr register, save it on MMU errors
+   and use it for LVAD.
+ + Move the $write to stdout out to the top-level.
+   Change BOUT to write to a buffer which is exported
+   to the top-level. No interrupts initially.
+ + Later on, add in the output buffer ready interrupt.
+ + Switch over to Verilator.
+ + Write the Verilator top-level file.
+ + Implement the terminal at or near the top level.
+ + Get the CPU to receive and send characters using
+   interrupts through the simulated terminal.
+ + Start to bring up Swieros on the Verilog CPU.
