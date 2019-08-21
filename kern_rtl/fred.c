@@ -1,9 +1,27 @@
+// Test kernel program.
+// Set up an interrupt handler and do a system call
+// which will be caught.
+// Set up a page directory and table
+// and try to access some virtual locations.
+
 #include <u.h>
 #include <libc.h>
 
 pdir(val)       { asm(LL,8); asm(PDIR); }
 spage(val)      { asm(LL,8); asm(SPAG); }
 splhi()         { asm(CLI); }
+splx()     	{ asm(STI); }
+ivec(void *isr) { asm(LL,8); asm(IVEC); }
+
+// Interrupt handler: print out an 'A'
+alltraps()
+{
+  asm(LI, 65);
+  asm(PUTC);
+  // printf("Hello\n");
+  asm(RTI);
+  asm(HALT);
+}
 
 enum {                          // page table entry flags
   PTE_P = 0x001,                // Present
@@ -25,6 +43,14 @@ int main()
   ksp= (uint *) 0x1ff0;
   asm(LL, 4);
   asm(SSP);
+
+  // Set up the interrupt handler
+  ivec(alltraps); splx();
+
+  // Now trap to it
+  exit(0);
+  putc('B');
+  asm(HALT);
 
   // Put a page table at 0x2000
   ptab= (uint *)0x2000;
@@ -59,10 +85,6 @@ int main()
 
   // Print out the value at location 0x0000 and 0x4000,
   // should be the same
-  putc('h');
-  putc('i');
-  putc('\n');
   aptr= (char *)0x0000; bptr= (char *)0x4000;
   printf("%x %x\n", *aptr, *bptr);
-  asm(HALT);
 }

@@ -14,26 +14,66 @@ module swivm (
 `include "mmu_consts.v"
 
   // Registers
-  reg [31:0] A, B, C, IR, SP=32'hFFFC, PC=`ENTRY;
+  reg [31:0] A, B, C, IR, PC;
+
+  // There are two stack pointers, one for user mode and one
+  // for kernel mode. When the CPU leaves user mode, we save
+  // SP to USP and load SP from KSP. When the CPU leaves
+  // kernel mode, we save SP to USP and load SP from USP.
+  // The gotcha is dealing with interrupts and exceptions.
+  // We have to save the trap value & PC on the kernel stack
+  // before we have switch the pointers. This is commented below.
+  // realKSP is the current kernel stack pointer regardless of
+  // what mode we are in.
+  reg  [31:0] USP, KSP, SP;
+  wire [31:0] realKSP= (usermode == 1'b1) ? KSP : SP;
 
   // Signed versions of the registers
   wire signed [31:0] signedA = A;
   wire signed [31:0] signedB = B;
 
   // The CPU essentially cycles between fetch, decode and two
-  // execute phases. There are also states where we are waiting
-  // for a result from the MMU.
-  localparam FETCH=       3'h0;
-  localparam DECODE=      3'h1;
-  localparam EXEC1=       3'h2;
-  localparam EXEC1WAIT=   3'h3;
-  localparam EXECWRWAIT=  3'h4;
-  localparam EXEC2=       3'h5;
-  localparam EXEC2WAIT=   3'h6;
-  reg [2:0] state;
+  // execute phases. There are states where we are waiting
+  // for a result from the MMU. There are states when we
+  // are processing an interrupt or exception.
+  localparam FETCH=       4'h0;
+  localparam DECODE=      4'h1;
+  localparam EXEC1=       4'h2;
+  localparam EXEC1WAIT=   4'h3;
+  localparam EXECWRWAIT=  4'h4;
+  localparam EXEC2=       4'h5;
+  localparam EXEC2WAIT=   4'h6;
+  localparam EXCEPT1=     4'h7;
+  localparam EXCEPT2=     4'h8;
+  localparam RTI1=        4'h9;
+  localparam RTI2=        4'ha;
+  reg [3:0] state;
 
   // Internal CPU state
-  reg usermode;				// If 1, we're in user mode
+  reg 	     usermode;			// If 1, we're in user mode
+  reg 	     intsenabled;		// If 1, interrupts are enabled
+  reg 	     haveinterrupt;		// 1 if there's been an interrupt
+  reg 	     haveexception;		// 1 if there's been an exception
+  reg [31:0] ivector;			// Interrupt vector
+  reg [31:0] trapval;			// Trap value
+					// This is the trap value with
+					// the USER bit set as required.
+  wire [31:0] utrapval= trapval | ( usermode << 4);
+
+  // The trap value is one of the following.
+  // It can be OR'd with USER to indicate
+  // that the trap occurred in user mode.
+  localparam FMEM=   5'h00;             // bad physical address 
+  localparam FTIMER= 5'h01;             // timer interrupt
+  localparam FKEYBD= 5'h02;             // keyboard interrupt
+  localparam FPRIV=  5'h03;             // privileged instruction
+  localparam FINST=  5'h04;             // illegal instruction
+  localparam FSYS=   5'h05;             // software trap
+  localparam FARITH= 5'h06;             // arithmetic trap
+  localparam FIPAGE= 5'h07;             // page fault on opcode fetch
+  localparam FWPAGE= 5'h08;             // page fault on write
+  localparam FRPAGE= 5'h09;		// page fault on read
+  localparam USER=   5'h10;		// user mode exception 
 
   // MMU interface
   reg [31:0] 	     addr;		// Address into memory
@@ -57,18 +97,47 @@ module swivm (
 
   // Set the CPU's internal state at start-up
   initial begin
-    state        <= FETCH;
-    usermode     <= 1'b0;
-    mmu_validcmd <= 1'b0;
+    state         <= FETCH;
+    usermode      <= 1'b0;
+    intsenabled   <= 1'b0;
+    haveinterrupt <= 1'b0;
+    haveexception <= 1'b0;
+    mmu_validcmd  <= 1'b0;
+    USP		  <= 32'hFFFC;
+    KSP		  <= 32'hFFFC;
+    SP		  <= 32'hFFFC;
+    PC		  <= `ENTRY;
+    ivector	  <= 32'h0000;
+    trapval	  <= 32'h0000;
   end
 
   always @(posedge i_clk) begin
     case (state)
-      FETCH:   begin			// Read the instruction through the MMU
+      FETCH:   
+					// Before we fetch the instruction, see
+					// if there is an exception or interrupt
+					// Fatal if there's an exception when
+					// interrupts are disabled
+	        if ((intsenabled == 1'b0) && (haveexception == 1'b1)) begin
+		   $write("exception in interrupt handler\n"); $finish;
+		end else
+
+					// Do we have an exception or an
+					// interrupt with interrupts enabled?
+		if ((haveexception == 1'b1) ||
+			((intsenabled == 1'b1) && (haveinterrupt == 1'b1))) begin
+					// Push the PC to KSP-8. Note that we
+					// use the real kernel SP here.
+		   addr <= realKSP - 8; wrdata <= PC; mmu_cmd <= MMU_WRITE;
+                   mmu_validcmd <= 1'b1; state <= EXCEPT1;
+		end else begin
+
+					// No interrupt or exception.
+					// Read the instruction through the MMU
 					// and wait for it to arrive
-		 addr <= PC; mmu_cmd <= MMU_READ; mmu_validcmd <= 1'b1;
-		 size <= 2'b11; state <= DECODE;
-	       end
+		   addr <= PC; mmu_cmd <= MMU_READ; mmu_validcmd <= 1'b1;
+		   size <= 2'b11; state <= DECODE;
+	        end
 
       DECODE:  begin
 		 mmu_validcmd <= 0;	// Stop sending the MMU command
@@ -94,6 +163,34 @@ module swivm (
 		   BNE:  PC <= (A != B) ? PC + immval : PC;
 		   BNZ:  PC <= (A != 32'b0) ? PC + immval : PC;
 		   BZ:   PC <= (A == 32'b0) ? PC + immval : PC;
+
+		   CLI:  if (usermode == 1'b1) begin
+			   trapval <= FPRIV;
+			 end else begin
+			   A <= { 31'b0, intsenabled };
+			   intsenabled <= 1'b0;
+			 end
+
+		   STI:  if (usermode == 1'b1) begin
+			   trapval <= FPRIV;
+			 end else begin
+			   intsenabled <= 1'b1;
+			 end
+
+		   RTI:  if (usermode == 1'b1) begin
+                           trapval <= FPRIV;
+			 end else begin		// Ask to read the trap value back
+						// SP is the kernel mode SP here.
+			   addr <= SP; mmu_cmd <= MMU_READ;
+                           mmu_validcmd <= 1'b1; SP <= SP + 8; state <= RTI1;
+		   	 end
+
+		   IVEC: if (usermode == 1'b1) begin
+			   trapval <= FPRIV;
+			 end else begin
+			   ivector <= A;
+			 end
+
 		   DIV:  A <= signedA / signedB;
 		   DIVI: A <= signedA / signedimm;
 		   DVU:  A <= A / B;
@@ -143,12 +240,11 @@ module swivm (
 		   SUB:  A <= A - B;
 		   SUBI: A <= A - immval;
 
-		   // Traps are not decoded properly. We only deal with S_exit
-		   TRAP: case (immval)
-			   S_exit: $finish;
-			   default: $display("Unknown syscall 0x%x at PC 0x%x\n",
-                                                immval, PC-4);
-			 endcase
+		   TRAP: begin
+			   trapval <= FSYS;
+			   haveexception <= 1'b1;
+			 end
+
 		   XOR:  A <= A ^ B;
 		   XORI: A <= A ^ immval;
 
@@ -245,8 +341,8 @@ module swivm (
 			 mmu_cmd <= MMU_WRITE; mmu_validcmd <= 1'b1;
 			 state <= EXECWRWAIT; end
 
-		   default: $display("Unknown opcode 0x%x at PC 0x%x\n",
-						opcode, PC-4);
+		   default: begin $display("Unknown opcode 0x%x at PC 0x%x\n",
+			  	            opcode, PC-4); $finish; end
 
 	         endcase
 	       end
@@ -313,6 +409,53 @@ module swivm (
 			 mmu_validcmd <= 1'b1; state <= EXECWRWAIT; end
 	         endcase
 	       end
+
+      EXCEPT1: begin
+		 mmu_validcmd <= 0;          	// Stop sending the MMU command
+                 if (rddata_valid) begin
+		  				// Push the trap value to KSP-16
+                   addr <= realKSP - 16; wrdata <= utrapval; mmu_cmd <= MMU_WRITE;
+                   mmu_validcmd <= 1'b1; state <= EXCEPT2;
+		 end
+      	       end
+
+      EXCEPT2: begin
+		 mmu_validcmd <= 0;          	// Stop sending the MMU command
+                 if (rddata_valid) begin
+						// Save the user stack pointer
+						// and leave user mode.
+		   if (usermode == 1'b1) USP <= SP;
+		   usermode <= 1'b0;
+		   haveexception <= 1'b0;	// We've dealt with the exception
+		   haveinterrupt <= 1'b0;	// or interrupt
+		   SP <= realKSP-16;		// Switch to the kernel stack
+		   PC <= ivector;		// Start the interrupt handler
+		   state <= FETCH;
+		 end
+      	       end
+
+      RTI1:    begin
+		 mmu_validcmd <= 0;          	// Stop sending the MMU command
+                 if (rddata_valid) begin	// Get the trap value back
+		   trapval <= rddata; addr <= SP; mmu_cmd <= MMU_READ;
+                   mmu_validcmd <= 1'b1; SP <= SP + 8; state <= RTI2;
+	 	 end
+      	       end
+
+      RTI2:    begin
+		 mmu_validcmd <= 0;          	// Stop sending the MMU command
+                 if (rddata_valid) begin	// Get the old PC value back
+		   PC <= rddata;
+		   KSP <= SP;			// Save the kernel stack pointer
+
+		   if (trapval[4] == 1'b1) begin // If moving back to user mode,
+		     SP <= USP;			// switch back to user stack
+		     usermode <= 1'b1;
+		   end
+
+		   state <= FETCH;
+		   end
+      	       end
     endcase
   end
 endmodule

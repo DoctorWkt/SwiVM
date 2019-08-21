@@ -5,6 +5,12 @@ This is a project to convert the virtual machine used in
 [Swieros](https://github.com/rswier/swieros) into Verilog. The long term
 goal is to get it to synthesize and to run on an FPGA using open-source tools.
 
+## Status - 21st August 2019
+
+I've got the MMU code working. It's not optimal yet. I've started on
+implementing the interrupt and exception handling. I can do a TRAP,
+handle it and return from interrupt.
+
 ## Status - 19th August 2019
 
 I designed the MMU and made a first cut implementation of it.

@@ -74,3 +74,27 @@ and prints out the value of some virtual locations. I didn't realise
 that the page dir entries also need to be PTE_W as well as the page
 table entries. Anyway, it now runs in `xem`. Now I need to get it
 to do the same thing in `kern_rtl/swivm`.
+
+Yes, got it to run in `kern_rtl/swivm`. I had the CPU starting up
+in user mode, which caused page faults, silly me.
+
+Now looking at the interrupt and trap handling. It looks like
+an interrupt pushes onto the stack: the PC+4, i.e. the PC
+after the current instruction, then the fault code. Also, there
+are user-mode and kernel-mode stack pointers. That's going to
+be interesting.
+
+## Tue 20 Aug 14:42:25 AEST 2019
+
+Wrote some interrupt handling stuff. `fred.c` sets the interrupt
+handler to *putc('A')*, then tries to *exit(0)*. With `xem`
+this falls to the interrupt handler and *A* appears. Not yet
+with the *swivm* version. Soon.
+
+## Wed 21 Aug 07:19:09 AEST 2019
+
+I think an exception stores the PC+4 i.e. the pointer to the
+next instruction, and RTI simply resets the PC to this value.
+It took a while but I got the handling of the stack pointer
+right. Now I can take a trap, do some work and return from
+interrupt. Haven't tried an exception or interrupt yet.
