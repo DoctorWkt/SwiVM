@@ -102,11 +102,12 @@ interrupt. Haven't tried an exception or interrupt yet.
 ## Wed 21 Aug 13:48:29 AEST 2019
 
 I think I might step back for a while and grok how the simulated
-CPU in em.c receives and deals with clock ticks; also, is there
+CPU in `em.c` receives and deals with clock ticks; also, is there
 a simulated disk, how does it work, how does it do interrupts?
 Ditto the keyboard/screen device.
 
 Notes:
+
  + There's a 4M RAM file system. It seems to be loaded into memory
    at the top.
  + These fault values look interesting: FTIMER = timer interrupt,
@@ -121,6 +122,7 @@ Notes:
  + As the filesystem is in memory, there's no I/O interrupts for this.
 
 There are some instructions which I should deal with:
+
  + HALT: I think I can implement this by moving to a HALT state and staying
    there forever.
  + IDLE: This is different from NOP in that the CPU stays in IDLE until
@@ -143,6 +145,7 @@ when they go high. The faults would be FTIMER, FKEYBD and a new one,
 FTERMOUT for terminal output.
 
 Question: which of the above instructions does the OS use?
+
  + BIN, BOUT, IVEC, TIME, LVAD, MSIZ, PDIR, SPAG, HALT, CYC.
 
 I guess I can read up some CYC to see what it does. No, it's commented out
@@ -150,3 +153,30 @@ so I can ignore CYC! I've implemented IDLE, HALT and MSIZ. I've added a
 clock tick line from outside the CPU which raises an interrupt when it
 goes high. I haven't tried these yet, but the code still runs the fred.c
 which causes a trap and then HALTs.
+
+## Wed 21 Aug 15:11:21 AEST 2019
+
+I think I can get away with 6M of RAM, as the RAM disk is 4M and
+there needs to be room for the page table. I probably need to make
+that 8M, i.e. 23 bits of addressing. We can definitely do this
+easily with Verilator. It will be impossible to bring this up on an
+FPGA with just block RAM.
+
+What to do next?
+
+ + Pass on the MMU errors as exceptions.
+ + Set up a bad_vaddr register, save it on MMU errors
+   and use it for LVAD.
+ + Move the $write to stdout out to the top-level.
+   Change BOUT to write to a buffer which is exported
+   to the top-level. No interrupts initially.
+ + Later on, add in the output buffer ready interrupt.
+
+At this point, it's time to cut over to Verilator.
+
+ + Write the Verilator top-level file.
+ + Implement the terminal at or near the top level.
+ + Get the CPU to receive and send characters using
+   interrupts through the simulated terminal.
+
+Then comes the hard bit: bringing up the OS!
