@@ -12,12 +12,13 @@ spage(val)      { asm(LL,8); asm(SPAG); }
 splhi()         { asm(CLI); }
 splx()     	{ asm(STI); }
 ivec(void *isr) { asm(LL,8); asm(IVEC); }
+out(port, val)  { asm(LL,8); asm(LBL,16); asm(BOUT); }
 
 // Interrupt handler: print out an 'A'
 alltraps()
 {
-  asm(LI, 65);
-  asm(PUTC);
+  asm(LBI, 65);
+  asm(BOUT);
   // printf("Hello\n");
   asm(RTI);
   asm(HALT);
@@ -49,7 +50,7 @@ int main()
 
   // Now trap to it
   exit(0);
-  putc('B');
+  out(1, 'B');
   asm(HALT);
 
   // Put a page table at 0x2000

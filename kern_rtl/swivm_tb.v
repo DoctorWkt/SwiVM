@@ -3,9 +3,11 @@
 
 module swivm_tb ();
 
-reg clk;
-reg tick;
+reg 	   clk;
+reg 	   tick;
 reg [15:0] tick_counter;
+wire [7:0] outbyte;
+wire       outbyte_valid;
 
 // Initialize all variables
 initial begin        
@@ -31,7 +33,14 @@ end
 // Connect DUT to test bench
 swivm DUT(
         clk,           	// Clock signal
-	tick		// Clock tick signal
+	tick,		// Clock tick signal
+	outbyte,	// Char to send to UART
+	outbyte_valid	// Is outbyte valid
 );
+
+// Deal with character output
+always @(posedge clk)
+  if (outbyte_valid == 1'b1)
+    $write("%c", outbyte);
 
 endmodule

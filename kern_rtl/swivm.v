@@ -7,8 +7,10 @@
 `include "memory.v"
 
 module swivm (
-  input		i_clk,			// Regular clock cycle
-  input		i_tick			// When high, a clock tick
+  input		  i_clk,		// Regular clock cycle
+  input		  i_tick,		// When high, a clock tick
+  output reg[7:0] o_byte,
+  output reg      o_validbyte
   );
 
 `include "opcodes.v"
@@ -122,6 +124,9 @@ module swivm (
       haveinterrupt <= 1;		// Raise an FTIMER interrupt
       trapval <= FTIMER;		// on an external clock tick
     end
+
+    if (o_validbyte == 1'b1)		// Drop o_validbyte after
+      o_validbyte <= 1'b0;		// one clock tick
 
     case (state)
       FETCH:   
@@ -246,7 +251,8 @@ module swivm (
 		   PSHA, PSHB, PSHC,
 		   PSHI: begin SP <= SP - 8; state <= EXEC2; end
 
-		   PUTC: $write("%c", A);
+		   BOUT: begin o_byte <= B[7:0]; o_validbyte <= 1'b1; end
+		   PUTC: begin o_byte <= A[7:0]; o_validbyte <= 1'b1; end
 		   SHL:	 A <= A << B;
 		   SHLI: A <= A << immval;
 		   SHR:	 A <= A >>> B;

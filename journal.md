@@ -180,3 +180,12 @@ At this point, it's time to cut over to Verilator.
    interrupts through the simulated terminal.
 
 Then comes the hard bit: bringing up the OS!
+
+## Thu 22 Aug 16:48:08 AEST 2019
+
+I've added the code to pass on the MMU errors as exceptions.
+I've set up a bad_vaddr register when there is an MMU error.
+I've moved $write to stdout out to the top-level and PUTC
+now uses it. PUTC still works. I've added BOUT, so I could
+remove PUTC now. I haven't tested the first two things yet.
+
