@@ -200,3 +200,10 @@ VCD file shows that it's running the fred.c code properly,
 i.e. the same as Icarus. I now need to write a different
 version of start_swivm.c to just convert the executable
 and to store the start address into a file.
+
+## Fri 23 Aug 16:15:51 AEST 2019
+
+I added the UART code from my TTT project here and wired
+up the CPU to use it for character output. I had do add
+some NOPs in to give the UART time to send each char.
+*printf()* isn't doing the *%d* yet.
