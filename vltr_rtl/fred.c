@@ -12,14 +12,16 @@ spage(val)      { asm(LL,8); asm(SPAG); }
 splhi()         { asm(CLI); }
 splx()     	{ asm(STI); }
 ivec(void *isr) { asm(LL,8); asm(IVEC); }
-out(port, val)  { asm(LL,8); asm(LBL,16); asm(BOUT); }
+out(port, val)  { asm(LL,8); asm(LBL,16); asm(BOUT);
+		  asm(NOP); asm(NOP); asm(NOP);
+		  asm(NOP); asm(NOP); asm(NOP); }
 
 // Interrupt handler: print out an 'A'
 alltraps()
 {
-  asm(LBI, 65);
-  asm(BOUT);
-  // printf("Hello\n");
+  out(1, 'B');
+  out(1, 'C');
+  out(1, '\n');
   asm(RTI);
   asm(HALT);
 }
@@ -45,13 +47,17 @@ int main()
   asm(LL, 4);
   asm(SSP);
 
+  // Say hello
+  puts("Hello\n");
+
   // Set up the interrupt handler
   ivec(alltraps); splx();
 
   // Now trap to it
   exit(0);
-  out(1, 'B');
-  asm(HALT);
+  out(1, 'D');
+  out(1, '\n');
+  // asm(HALT);
 
   // Put a page table at 0x2000
   ptab= (uint *)0x2000;
@@ -81,11 +87,13 @@ int main()
   pdir(pd);
 
   // Print out the page table entry
-  printf("%x\n", pd[0]);
+  printf("Hello again\n");
+  printf("pd[0] is %x\n", pd[0]);
   spage(1);
 
   // Print out the value at location 0x0000 and 0x4000,
   // should be the same
   aptr= (char *)0x0000; bptr= (char *)0x4000;
-  printf("%x %x\n", *aptr, *bptr);
+  printf("page 0 %x %x\n", *aptr, *bptr);
+  asm(HALT);
 }

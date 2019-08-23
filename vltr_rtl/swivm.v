@@ -6,12 +6,19 @@
 `include "mmu.v"
 `include "memory.v"
 
+`ifndef VERILATOR
+`include "txuartlite.v"
+`include "rxuartlite.v"
+`endif
+
 module swivm (
   input		  i_clk,		// Regular clock cycle
   input		  i_tick,		// When high, a clock tick
   input [31:0]	  i_entryPC,		// Initial PC value
-  output reg[7:0] o_byte,
-  output reg      o_validbyte
+  output [31:0]   o_setup,		// Tell UART co-sim: clocks per baud
+  output	  o_uart_tx,		// UART transmit signal line
+  input		  i_uart_rx,		// UART receive signal line
+  output	  o_halted		// CPU is halted
   );
 
 `include "opcodes.v"
@@ -113,6 +120,7 @@ module swivm (
     haveinterrupt = 1'b0;
     haveexception = 1'b0;
     mmu_validcmd  = 1'b0;
+    o_halted      = 1'b0;
     USP		  = 32'hFFFC;
     KSP		  = 32'hFFFC;
     SP		  = 32'hFFFC;
@@ -127,8 +135,8 @@ module swivm (
       trapval <= FTIMER;		// on an external clock tick
     end
 
-    if (o_validbyte == 1'b1)		// Drop o_validbyte after
-      o_validbyte <= 1'b0;		// one clock tick
+    if (tx_stb == 1'b1)			// Drop tx_stb after
+      tx_stb <= 1'b0;			// one clock tick
 
     case (state)
       PREFETCH: begin PC <= i_entryPC; state <= FETCH; end
@@ -139,7 +147,7 @@ module swivm (
 					// Fatal if there's an exception when
 					// interrupts are disabled
 		if ((intsenabled == 1'b0) && (haveexception == 1'b1)) begin
-		   $write("exception in interrupt handler\n"); $finish;
+		   $write("exception in interrupt handler\n"); o_halted <= 1'b1;
 		end else
 
 					// Do we have an exception or an
@@ -261,8 +269,8 @@ module swivm (
 		   PSHA, PSHB, PSHC,
 		   PSHI: begin SP <= SP - 8; state <= EXEC2; end
 
-		   BOUT: begin o_byte <= B[7:0]; o_validbyte <= 1'b1; end
-		   PUTC: begin o_byte <= A[7:0]; o_validbyte <= 1'b1; end
+		   BOUT: begin tx_data <= B[7:0]; tx_stb <= 1'b1; end
+		   PUTC: begin tx_data <= A[7:0]; tx_stb <= 1'b1; end
 		   SHL:	 A <= A << B;
 		   SHLI: A <= A << immval;
 		   SHR:	 A <= A >>> B;
@@ -375,7 +383,7 @@ module swivm (
 			 state <= EXECWRWAIT; end
 
 		   default: begin $display("Unknown opcode 0x%x at PC 0x%x\n",
-					    opcode, PC-4); $finish; end
+					    opcode, PC-4); o_halted <= 1'b1; end
 
 		 endcase
 	       end
@@ -527,7 +535,7 @@ module swivm (
 	       end
 
       HALTSTATE: begin				// Never leave HALTSTATE
-		   $finish;			// In simulation, stop
+		   o_halted <= 1'b1;		// In simulation, stop
 		 end
 
       IDLESTATE: begin				// Stay here until there is
@@ -539,4 +547,33 @@ module swivm (
       default: ;
     endcase
   end
+
+  // Interface to the UART in general
+  parameter CLOCK_RATE_HZ = 1000000;    // System clock rate in Hz
+  parameter BAUD_RATE = 115_200;        // 115.2 KBaud
+  parameter [23:0] CLOCKS_PER_BAUD = CLOCK_RATE_HZ/BAUD_RATE;
+
+`ifdef VERILATOR
+  assign o_setup = { 8'b0, CLOCKS_PER_BAUD };
+`endif
+
+  // Interface to the RX UART
+/* verilator lint_off UNUSED */
+  wire [7:0] rx_data;           // Each char typed by user, not all bits used
+  wire rx_avail;                // If true, user data is available
+/* verilator lint_on UNUSED */
+
+  // Interface to the TX UART
+  reg  [7:0] tx_data;           // Data to send to the UART
+/* verilator lint_off UNUSED */
+  wire       tx_busy;           // Is it busy?
+/* verilator lint_on UNUSED */
+  reg        tx_stb;            // Strobe to ask to send data
+  initial    tx_stb= 0;
+
+  // Wire up the transmit and receive serial port modules
+  txuartlite #(CLOCKS_PER_BAUD)
+        transmitter(i_clk, tx_stb, tx_data, o_uart_tx, tx_busy);
+  rxuartlite #(CLOCKS_PER_BAUD)
+        receiver(i_clk, i_uart_rx, rx_avail, rx_data);
 endmodule

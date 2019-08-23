@@ -9,6 +9,8 @@ VCDFILE := $(TOPMOD).vcd
 SIMPROG := $(TOPMOD)_tb
 SIMFILE := $(SIMPROG).cpp
 VDIRFB  := ./obj_dir
+COSIMS  := uartsim.cpp
+LIBS    := -l curses
 all: $(VCDFILE)
 
 GCC := g++

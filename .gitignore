@@ -1,5 +1,6 @@
 RCS
 bin/start_swivm
+bin/exec2img
 bin/xc
 bin/xeu
 bin/xem
