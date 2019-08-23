@@ -17,11 +17,10 @@ out(port, val)  { asm(LL,8); asm(LBL,16); asm(BOUT); }
 // Interrupt handler: print out an 'A'
 alltraps()
 {
-  asm(LBI, 65);
-  asm(BOUT);
-  // printf("Hello\n");
+  //asm(LBI, 65);
+  //asm(BOUT);
+  puts("In alltraps\n");
   asm(RTI);
-  asm(HALT);
 }
 
 enum {                          // page table entry flags
@@ -50,8 +49,8 @@ int main()
 
   // Now trap to it
   exit(0);
-  out(1, 'B');
-  asm(HALT);
+
+  printf("Back from alltraps\n");
 
   // Put a page table at 0x2000
   ptab= (uint *)0x2000;
@@ -77,15 +76,17 @@ int main()
   // Point the first page directory entry at the page table
   pd[0]= (uint *)(0x2000 | PTE_P | PTE_W);
 
-  // Set the page directory and enable paging
+  // Set the page directory
   pdir(pd);
 
   // Print out the page table entry
-  printf("%x\n", pd[0]);
+  printf("pte is at 0x%x\n", pd[0]);
+
+  // Enable paging
   spage(1);
 
   // Print out the value at location 0x0000 and 0x4000,
   // should be the same
   aptr= (char *)0x0000; bptr= (char *)0x4000;
-  printf("%x %x\n", *aptr, *bptr);
+  printf("val at 0x0000: %x, at 0x4000: %x\n", *aptr, *bptr);
 }

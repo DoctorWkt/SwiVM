@@ -206,4 +206,7 @@ and to store the start address into a file.
 I added the UART code from my TTT project here and wired
 up the CPU to use it for character output. I had do add
 some NOPs in to give the UART time to send each char.
-*printf()* isn't doing the *%d* yet.
+*printf()* isn't doing the *%d* yet. Hmm, actually, it is!
+I've just committed a *fred.c* which traps, RTIs, sets up
+paging, maps two virtual pages to the same frame, and
+prints out a byte from the same offset on both pages.
