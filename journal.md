@@ -24,7 +24,6 @@ I've also moved *puts()* into `lib/libc.h` and added a *vwrite()*
 function so that I can use it instead of the *write()* system call.
 Now I can *printf()*.
 
-
 ## Sun 18 Aug 17:23:58 AEST 2019
 
 I've rearranged the code so that only the Verilog code is in `rtl/`,
@@ -189,3 +188,15 @@ I've moved $write to stdout out to the top-level and PUTC
 now uses it. PUTC still works. I've added BOUT, so I could
 remove PUTC now. I haven't tested the first two things yet.
 
+## Fri 23 Aug 10:22:13 AEST 2019
+
+I spent some time this morning changing over to Verilator.
+Lots of errors and warnings which I've fixed. It took me
+a while to work out how to set up a way to control the PC
+start value at run-time, but now I can. Verilator is
+definitely hitting the $write command but I'm not seeing
+any output. It is stopping at $finish, thankfully. The
+VCD file shows that it's running the fred.c code properly,
+i.e. the same as Icarus. I now need to write a different
+version of start_swivm.c to just convert the executable
+and to store the start address into a file.

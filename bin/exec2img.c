@@ -54,13 +54,7 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<0x10000; i+=4) {
     fprintf(zout, "%02x %02x %02x %02x\n", mem[i], mem[i+1], mem[i+2], mem[i+3]);
   }
-  printf("entry is at 0x%x, %d\n", hdr.entry, hdr.entry);
-
-  // Compile the Verilog code with the entry point
-  char *vcmd= malloc(100);
-  sprintf(vcmd, "iverilog -DENTRY=%d swivm_tb.v", hdr.entry);
-  // printf("%s\n", vcmd);
-  system(vcmd);
+  printf("%d\n", hdr.entry);
 
   // Clean up and exit
   fclose(zin); fclose(zout);
