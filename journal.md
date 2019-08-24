@@ -210,3 +210,10 @@ some NOPs in to give the UART time to send each char.
 I've just committed a *fred.c* which traps, RTIs, sets up
 paging, maps two virtual pages to the same frame, and
 prints out a byte from the same offset on both pages.
+
+## Sat 24 Aug 09:21:28 AEST 2019
+
+Actually, *printf()* isn't doing the *%d* yet. Well, not
+consistently which is very weird. Ahah, I was extending
+the comparisons (e.g. A == B) with 31'b1 instead of 31'b0!
+Fixed.

@@ -236,9 +236,9 @@ module swivm (
 		   DVU:	 A <= A / B;
 		   DVUI: A <= A / immval;
 		   ENT:	 SP <= SP + immval;
-		   EQ:	 A <= { 31'b1, (A == B) };
-		   GE:	 A <= { 31'b1, (signedA >= signedB) };
-		   GEU:	 A <= { 31'b1, (A >= B) };
+		   EQ:	 A <= { 31'b0, (A == B) };
+		   GE:	 A <= { 31'b0, (signedA >= signedB) };
+		   GEU:	 A <= { 31'b0, (A >= B) };
 		   JMP:	 PC <= PC + immval;
 
 		   JSRA,
@@ -252,8 +252,8 @@ module swivm (
 		   LBI:	 B <= immval;
 		   LBHI: B <= { A[7:0], immval[23:0] };
 		   LCA:	 C <= A;
-		   LT:	 A <= { 31'b1, (signedA < signedB) };
-		   LTU:	 A <= { 31'b1, (A < B) };
+		   LT:	 A <= { 31'b0, (signedA < signedB) };
+		   LTU:	 A <= { 31'b0, (A < B) };
 		   MOD:	 A <= signedA % signedB;
 		   MODI: A <= signedA % signedimm;
 		   MDU:	 A <= A % B;
@@ -261,7 +261,7 @@ module swivm (
 		   MSIZ: A <= MEM_SIZE;
 		   MUL:	 A <= A * B;
 		   MULI: A <= A * immval;
-		   NE:	 A <= { 31'b1, (A != B) };
+		   NE:	 A <= { 31'b0, (A != B) };
 		   NOP:	 ;
 		   OR:	 A <= A | B;
 		   ORI:	 A <= A | immval;
