@@ -7,6 +7,7 @@
 #include <u.h>
 #include <libc.h>
 
+stmr(val)       { asm(LL,8); asm(TIME); }
 pdir(val)       { asm(LL,8); asm(PDIR); }
 spage(val)      { asm(LL,8); asm(SPAG); }
 splhi()         { asm(CLI); }
@@ -16,13 +17,13 @@ out(port, val)  { asm(LL,8); asm(LBL,16); asm(BOUT);
 		  asm(NOP); asm(NOP); asm(NOP);
 		  asm(NOP); asm(NOP); asm(NOP); }
 
-// Interrupt handler: print out an 'A'
+// Interrupt handler: print out a message
 alltraps()
 {
   out(1, 'B');
   out(1, 'C');
   out(1, '\n');
-  asm(RTI);
+  // asm(RTI);
   asm(HALT);
 }
 
@@ -53,47 +54,9 @@ int main()
   // Set up the interrupt handler
   ivec(alltraps); splx();
 
-  // Now trap to it
-  exit(0);
-  out(1, 'D');
-  out(1, '\n');
-  // asm(HALT);
+  // Set a timer for 400 (cycles?)
+  stmr(400);
 
-  // Put a page table at 0x2000
-  ptab= (uint *)0x2000;
-
-  // Put a page directory at 0x3000
-  pd= (uint *)0x3000;
-
-  // Map virtual 0x0000 to 0x0000, present, writable
-  ptab[0]= 0x0000 | PTE_P | PTE_W;
-
-  // Map virtual 0x1000 to 0x1000, present, writable
-  ptab[1]= 0x1000 | PTE_P | PTE_W;
-
-  // Map virtual 0x2000 to 0x2000, present, writable
-  ptab[2]= 0x2000 | PTE_P | PTE_W;
-
-  // Map virtual 0x3000 to 0x3000, present, writable
-  ptab[3]= 0x3000 | PTE_P | PTE_W;
-
-  // Map virtual 0x4000 to 0x0000, present, writable
-  ptab[4]= 0x0000 | PTE_P | PTE_W;
-
-  // Point the first page directory entry at the page table
-  pd[0]= (uint *)(0x2000 | PTE_P | PTE_W);
-
-  // Set the page directory and enable paging
-  pdir(pd);
-
-  // Print out the page table entry
-  printf("Hello again\n");
-  printf("pd[0] is %x\n", pd[0]);
-  spage(1);
-
-  // Print out the value at location 0x0000 and 0x4000,
-  // should be the same
-  aptr= (char *)0x0000; bptr= (char *)0x4000;
-  printf("page 0 %x %x\n", *aptr, *bptr);
-  asm(HALT);
+  // Do nothing
+  while (1) ;
 }

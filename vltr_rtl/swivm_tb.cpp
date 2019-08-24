@@ -13,6 +13,9 @@
 #include "uartsim.h"
 
 int	main(int argc, char **argv) {
+
+	int counter=0;
+
 	Verilated::commandArgs(argc, argv);
 
 	// Get the PC entry point
@@ -32,13 +35,20 @@ int	main(int argc, char **argv) {
         uart->setup(baudclocks);
 
 	tb->opentrace("swivm.vcd");
-        tb->m_core->i_tick= 0;
         tb->m_core->i_entryPC= atoi(argv[1]);
 
 	while (1) {
+		// Send a clock tick
 		tb->tick();
+
+		// Not sure
 		tb->m_core->i_uart_rx = (*uart)(tb->m_core->o_uart_tx);
+
+		// Stop simulation when CPU is halted
 		if (tb->m_core->o_halted) break;
+
+		counter++;
+		if (counter >= 8000) break;
 	}
 	printf("\n\nSimulation complete\n");
 	// endwin();

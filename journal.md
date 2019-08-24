@@ -217,3 +217,12 @@ Actually, *printf()* isn't doing the *%d* yet. Well, not
 consistently which is very weird. Ahah, I was extending
 the comparisons (e.g. A == B) with 31'b1 instead of 31'b0!
 Fixed.
+
+## Sat 24 Aug 13:15:45 AEST 2019
+
+Now looking at clock interrupts. I thought there was a periodic
+timer but no. The TIME instruction sets a counter, which I think
+is in clock cycles. Once this reaches zero, an FTIMER interrupt
+occurs. Now I've got to implement this in swivm.v. Done. Right now,
+as long as I set a timer for about 400 cycles or more, I get the
+same output as `em.c`.

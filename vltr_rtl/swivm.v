@@ -13,7 +13,6 @@
 
 module swivm (
   input		  i_clk,		// Regular clock cycle
-  input		  i_tick,		// When high, a clock tick
   input [31:0]	  i_entryPC,		// Initial PC value
   output [31:0]   o_setup,		// Tell UART co-sim: clocks per baud
   output	  o_uart_tx,		// UART transmit signal line
@@ -72,6 +71,8 @@ module swivm (
   reg [31:0] ivector;			// Interrupt vector
   reg [31:0] bad_vaddr;			// Virtual address that causes MMU error
   reg [31:0] trapval;			// Trap value
+  reg [31:0] timer_counter;		// Incrementing counter for FTIMER
+  reg [31:0] timer_value;		// Incrementing counter for FTIMER
 
   // The trap value is one of the following.
   // It can be OR'd with USER to indicate
@@ -126,13 +127,19 @@ module swivm (
     SP		  = 32'hFFFC;
     ivector	  = 32'h0000;
     trapval	  = 32'h0000;
+    timer_counter = 32'h0000;
+    timer_value   = 32'h0000;
   end
 
   always @(posedge i_clk) begin
 
-    if (i_tick) begin
-      haveinterrupt <= 1;		// Raise an FTIMER interrupt
-      trapval <= FTIMER;		// on an external clock tick
+    if (timer_value != 32'h0000) begin
+      timer_counter <= timer_counter + 1;
+      if (timer_counter >= timer_value) begin
+        haveinterrupt <= 1;		// Raise an FTIMER interrupt
+        trapval       <= FTIMER;	// when the counter hits the
+        timer_counter <= 32'h0000;	// timer value
+      end
     end
 
     if (tx_stb == 1'b1)			// Drop tx_stb after
@@ -229,6 +236,13 @@ module swivm (
 			   trapval <= FPRIV;
 			 end else begin
 			   A <= bad_vaddr;
+			 end
+
+		   TIME: if (usermode == 1'b1) begin
+			   trapval <= FPRIV;
+			 end else begin
+			   timer_value   <= A;
+			   timer_counter <= 32'h0000;
 			 end
 
 		   DIV:	 A <= signedA / signedB;
